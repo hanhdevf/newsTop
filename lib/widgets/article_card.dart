@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:newtop/models/article.dart';
 import 'package:newtop/utils/navigation_helper.dart';
-import 'package:newtop/services/storage_service.dart';
+import 'package:newtop/mixins/bookmark_mixin.dart';
+import 'package:newtop/widgets/bookmark_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// A reusable card widget that displays article information with bookmark functionality.
@@ -28,91 +29,11 @@ class ArticleCard extends StatefulWidget {
   State<ArticleCard> createState() => _ArticleCardState();
 }
 
-class _ArticleCardState extends State<ArticleCard> {
-  late StorageService _storageService;
-  bool _isBookmarked = false;
-  bool _isLoading = false;
-
+class _ArticleCardState extends State<ArticleCard> with BookmarkMixin {
   @override
   void initState() {
     super.initState();
-    _initializeStorage();
-  }
-
-  Future<void> _initializeStorage() async {
-    _storageService = await StorageService.getInstance();
-    await _checkBookmarkStatus();
-  }
-
-  Future<void> _checkBookmarkStatus() async {
-    if (widget.article.id != null) {
-      final isBookmarked = await _storageService.isBookmarked(widget.article.id!);
-      if (mounted) {
-        setState(() {
-          _isBookmarked = isBookmarked;
-        });
-      }
-    }
-  }
-
-  Future<void> _toggleBookmark() async {
-    if (widget.article.id == null || _isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      bool success;
-      if (_isBookmarked) {
-        success = await _storageService.removeBookmark(widget.article.id!);
-        if (success && mounted) {
-          setState(() {
-            _isBookmarked = false;
-          });
-          _showSnackBar('Đã xóa khỏi bookmark');
-          
-          // Notify parent widget immediately
-          if (widget.onBookmarkChanged != null) {
-            widget.onBookmarkChanged!(_isBookmarked);
-          }
-        }
-      } else {
-        success = await _storageService.addBookmark(widget.article);
-        if (success && mounted) {
-          setState(() {
-            _isBookmarked = true;
-          });
-          _showSnackBar('Đã thêm vào bookmark');
-          
-          // Notify parent widget immediately
-          if (widget.onBookmarkChanged != null) {
-            widget.onBookmarkChanged!(_isBookmarked);
-          }
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        _showSnackBar('Có lỗi xảy ra: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  void _showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
+    initializeBookmark(widget.article.id);
   }
 
   @override
@@ -159,7 +80,14 @@ class _ArticleCardState extends State<ArticleCard> {
                       ),
                       const SizedBox(width: 8),
                       // Bookmark button
-                      _buildBookmarkButton(),
+                      BookmarkButton(
+                        isBookmarked: isBookmarked,
+                        isLoading: isLoading,
+                        onPressed: () => toggleBookmark(
+                          widget.article,
+                          onBookmarkChanged: widget.onBookmarkChanged,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -237,39 +165,23 @@ class _ArticleCardState extends State<ArticleCard> {
             ),
           ),
         ),
-       
+        // Bookmark button overlay on image
+        // Positioned(
+        //   top: 8,
+        //   right: 8,
+        //   child: BookmarkButton(
+        //     isBookmarked: isBookmarked,
+        //     isLoading: isLoading,
+        //     onPressed: () => toggleBookmark(
+        //       widget.article,
+        //       onBookmarkChanged: widget.onBookmarkChanged,
+        //     ),
+        //     overlay: true,
+        //     size: 20,
+        //     padding: const EdgeInsets.all(6),
+        //   ),
+        // ),
       ],
-    );
-  }
-
-  Widget _buildBookmarkButton({bool overlay = false}) {
-    return Container(
-      decoration: overlay ? BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(20),
-      ) : null,
-      child: IconButton(
-        icon: _isLoading 
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
-          : Icon(
-              _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              color: overlay ? Colors.white : (_isBookmarked ? Colors.orange : Colors.grey[600]),
-              size: 24,
-            ),
-        onPressed: _isLoading ? null : _toggleBookmark,
-        padding: const EdgeInsets.all(8),
-        constraints: const BoxConstraints(
-          minWidth: 40,
-          minHeight: 40,
-        ),
-      ),
     );
   }
 

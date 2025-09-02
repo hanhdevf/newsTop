@@ -12,6 +12,7 @@ import 'package:newtop/widgets/category_card.dart';
 import 'package:newtop/models/category.dart';
 import 'package:newtop/screens/bookmarked_articles_screen.dart';
 
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -27,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isRefreshing = false;
   int _bookmarkCount = 0;
   
-  // Category filtering
+  // Category filtering - sử dụng NewsCategory enum
   final List<Category> _categories = Category.getDefaultCategories();
   Category? _selectedCategory;
 
@@ -69,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final response = await _apiService.getTopHeadlines(
-        category: _selectedCategory?.id, // Neu category không null, thì sử dụng category.id đó
+        category: _selectedCategory?.id, // Vẫn sử dụng category.id để tương thích với API
       );
       
       setState(() {

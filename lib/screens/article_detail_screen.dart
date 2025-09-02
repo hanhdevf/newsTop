@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:newtop/models/article.dart';
-import 'package:newtop/services/storage_service.dart';
+import 'package:newtop/mixins/bookmark_mixin.dart';
+import 'package:newtop/widgets/bookmark_button.dart';
 import 'package:newtop/themes/app_theme.dart';
 import 'package:newtop/utils/navigation_helper.dart';
+import 'package:newtop/utils/snackbar_helper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
@@ -15,80 +17,17 @@ class ArticleDetailScreen extends StatefulWidget {
   State<ArticleDetailScreen> createState() => _ArticleDetailScreenState();
 }
 
-class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
-  late StorageService _storageService;
-  bool _isBookmarked = false;
-  bool _isLoading = false;
-
+class _ArticleDetailScreenState extends State<ArticleDetailScreen> with BookmarkMixin {
   @override
   void initState() {
     super.initState();
-    _initializeStorage();
+    _initializeBookmark();
   }
 
-  Future<void> _initializeStorage() async {
-    _storageService = await StorageService.getInstance();
-    await _checkBookmarkStatus();
-  }
-
-  Future<void> _checkBookmarkStatus() async {
+  Future<void> _initializeBookmark() async {
     final article = NavigationHelper.getArticle(context);
     if (article?.id != null) {
-      final isBookmarked = await _storageService.isBookmarked(article!.id!);
-      if (mounted) {
-        setState(() {
-          _isBookmarked = isBookmarked;
-        });
-      }
-    }
-  }
-
-  Future<void> _toggleBookmark() async {
-    final article = NavigationHelper.getArticle(context);
-    if (article?.id == null || _isLoading) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      bool success;
-      if (_isBookmarked) {
-        success = await _storageService.removeBookmark(article!.id!);
-        if (success) {
-          setState(() {
-            _isBookmarked = false;
-          });
-          _showSnackBar('Đã xóa khỏi bookmark');
-        }
-      } else {
-        success = await _storageService.addBookmark(article!);
-        if (success) {
-          setState(() {
-            _isBookmarked = true;
-          });
-          _showSnackBar('Đã thêm vào bookmark');
-        }
-      }
-    } catch (e) {
-      _showSnackBar('Có lỗi xảy ra: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  void _showSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      await initializeBookmark(article!.id);
     }
   }
 
@@ -105,46 +44,19 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
           backgroundColor: AppTheme.primaryColor,
           foregroundColor: Colors.white,
           leading: IconButton(
-            onPressed: () {
-              NavigationHelper.goBack(context);
-            },
+            onPressed: () => NavigationHelper.goBack(context),
             icon: const Icon(Icons.arrow_back),
           ),
         ),
         body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Không tìm thấy bài viết',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Vui lòng thử lại',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
+          child: Text('Không thể tải thông tin bài viết'),
         ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Chi tiết bài viết',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: const Text('Chi tiết bài viết'),
         backgroundColor: AppTheme.primaryColor,
         foregroundColor: Colors.white,
         leading: IconButton(
@@ -155,22 +67,12 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
         ),
         actions: [
           // Bookmark button
-          IconButton(
-            onPressed: _isLoading ? null : _toggleBookmark,
-            icon: _isLoading 
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Icon(
-                  _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                  color: _isBookmarked ? Colors.orange : Colors.white,
-                ),
-            tooltip: _isBookmarked ? 'Xóa bookmark' : 'Thêm bookmark',
+          BookmarkButton(
+            isBookmarked: isBookmarked,
+            isLoading: isLoading,
+            onPressed: () => toggleBookmark(article),
+            iconColor: Colors.white,
+            tooltip: isBookmarked ? 'Xóa bookmark' : 'Thêm bookmark',
           ),
           IconButton(
             onPressed: () => _copyToClipboard(context, article),
@@ -416,19 +318,13 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
     
     try {
       await Share.share(shareText);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã chia sẻ bài viết'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (context.mounted) {
+        SnackBarHelper.showSuccess(context, 'Đã chia sẻ bài viết');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi khi chia sẻ bài viết: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        SnackBarHelper.showError(context, 'Lỗi khi chia sẻ bài viết: $e');
+      }
     }
   }
 
@@ -437,30 +333,19 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
     
     try {
       await Clipboard.setData(ClipboardData(text: deepLink));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đã copy link vào clipboard'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      if (context.mounted) {
+        SnackBarHelper.showSuccess(context, 'Đã copy link vào clipboard');
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi khi copy link: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        SnackBarHelper.showError(context, 'Lỗi khi copy link: $e');
+      }
     }
   }
 
   void _openInBrowser(BuildContext context, Article article) async {
     if (article.url == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Không có link để mở'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      SnackBarHelper.showError(context, 'Không có link để mở');
       return;
     }
 
@@ -472,12 +357,9 @@ class _ArticleDetailScreenState extends State<ArticleDetailScreen> {
         throw Exception('Không thể mở link');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi khi mở link: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (context.mounted) {
+        SnackBarHelper.showError(context, 'Lỗi khi mở link: $e');
+      }
     }
   }
 }

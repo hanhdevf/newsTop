@@ -1,4 +1,55 @@
-class AppConstants {
+// News Category Enum
+enum NewsCategory {
+  general,
+  business,
+  technology,
+  sports,
+  entertainment,
+  health,
+  science;
+
+  String get displayName {
+    switch (this) {
+      case NewsCategory.general:
+        return 'Tổng hợp';
+      case NewsCategory.business:
+        return 'Kinh doanh';
+      case NewsCategory.technology:
+        return 'Công nghệ';
+      case NewsCategory.sports:
+        return 'Thể thao';
+      case NewsCategory.entertainment:
+        return 'Giải trí';
+      case NewsCategory.health:
+        return 'Sức khỏe';
+      case NewsCategory.science:
+        return 'Khoa học';
+    }
+  }
+
+  String get icon {
+    switch (this) {
+      case NewsCategory.general:
+        return '📰';
+      case NewsCategory.business:
+        return '💼';
+      case NewsCategory.technology:
+        return '💻';
+      case NewsCategory.sports:
+        return '⚽';
+      case NewsCategory.entertainment:
+        return '🎬';
+      case NewsCategory.health:
+        return '🏥';
+      case NewsCategory.science:
+        return '🔬';
+    }
+  }
+
+  String get value => name;
+}
+
+class Constants {
   // App Information
   static const String appName = 'NewsTop';
   static const String appVersion = '1.0.0';
@@ -15,38 +66,6 @@ class AppConstants {
   // Default Country and Language
   static const String defaultCountry = 'us';
   static const String defaultLanguage = 'en';
-  
-  // Categories
-  static const List<String> categories = [
-    'general',
-    'business',
-    'technology',
-    'sports',
-    'entertainment',
-    'health',
-    'science',
-  ];
-  // Category Display Names
-  static const Map<String, String> categoryDisplayNames = {
-    'general': 'Tổng hợp',
-    'business': 'Kinh doanh',
-    'technology': 'Công nghệ',
-    'sports': 'Thể thao',
-    'entertainment': 'Giải trí',
-    'health': 'Sức khỏe',
-    'science': 'Khoa học',
-  };
-  
-  // Category Icons
-  static const Map<String, String> categoryIcons = {
-    'general': '📰',
-    'business': '💼',
-    'technology': '💻',
-    'sports': '⚽',
-    'entertainment': '🎬',
-    'health': '🏥',
-    'science': '🔬',
-  };
   
   // Pagination
   static const int pageSize = 20;

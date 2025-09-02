@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:newtop/models/category.dart';
 
+
 class CategoryCard extends StatelessWidget {
   final Category category;
   final VoidCallback? onTap;
@@ -32,7 +33,7 @@ class CategoryCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              category.icon,  // Hiển thị emoji trực tiếp
+              category.icon,  // Hiển thị emoji trực tiếp từ Category model
               style: TextStyle(
                 fontSize: 16,
                 color: isSelected ? Colors.white : Colors.grey[600],
@@ -40,7 +41,7 @@ class CategoryCard extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              category.displayName,
+              category.displayName, // Hiển thị tên từ Category model
               style: TextStyle(
                 color: isSelected ? Colors.white : Colors.grey[700],
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,

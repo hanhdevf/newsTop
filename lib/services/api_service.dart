@@ -17,12 +17,12 @@ class ApiService {
     String? category,
     String? country,
     int page = 1,
-    int pageSize = AppConstants.pageSize,
+    int pageSize = Constants.pageSize,
   }) async {
     try {
       // Build query parameters
       final Map<String, String> queryParams = {
-        'apiKey': AppConstants.apiKey,
+        'apiKey': Constants.apiKey,
         'page': page.toString(),
         'pageSize': pageSize.toString(),
       };
@@ -36,11 +36,11 @@ class ApiService {
       if (country != null && country.isNotEmpty) {
         queryParams['country'] = country;
       } else {
-        queryParams['country'] = AppConstants.defaultCountry;
+        queryParams['country'] = Constants.defaultCountry;
       }
 
       // Build URL
-      final Uri uri = Uri.parse(AppConstants.baseUrl + AppConstants.topHeadlinesEndpoint)
+      final Uri uri = Uri.parse(Constants.baseUrl + Constants.topHeadlinesEndpoint)
           .replace(queryParameters: queryParams);
 
       print('🌐 API Request: $uri');
@@ -83,12 +83,12 @@ class ApiService {
       }
     } catch (e) {
       print('❌ Exception occurred: $e');
-      String errorMessage = AppConstants.apiErrorMessage;
+      String errorMessage = Constants.apiErrorMessage;
       
       if (e.toString().contains('timeout')) {
         errorMessage = 'Request timeout. Vui lòng thử lại.';
       } else if (e.toString().contains('SocketException')) {
-        errorMessage = AppConstants.networkErrorMessage;
+        errorMessage = Constants.networkErrorMessage;
       }
       
       return ApiResponse.error(errorMessage);
@@ -99,17 +99,17 @@ class ApiService {
   Future<ApiResponse<List<Article>>> searchArticles({
     required String query,
     int page = 1,
-    int pageSize = AppConstants.pageSize,
+    int pageSize = Constants.pageSize,
     String? sortBy,
   }) async {
     try {
       // Build query parameters
       final Map<String, String> queryParams = {
-        'apiKey': AppConstants.apiKey,
+        'apiKey': Constants.apiKey,
         'q': query,
         'page': page.toString(),
         'pageSize': pageSize.toString(),
-        'language': AppConstants.defaultLanguage,
+        'language': Constants.defaultLanguage,
       };
 
       // Add sortBy if provided
@@ -118,7 +118,7 @@ class ApiService {
       }
 
       // Build URL
-      final Uri uri = Uri.parse(AppConstants.baseUrl + AppConstants.everythingEndpoint)
+      final Uri uri = Uri.parse(Constants.baseUrl + Constants.everythingEndpoint)
           .replace(queryParameters: queryParams);
 
       print('🔍 Search Request: $uri');
@@ -160,12 +160,12 @@ class ApiService {
       }
     } catch (e) {
       print('❌ Search Exception occurred: $e');
-      String errorMessage = AppConstants.apiErrorMessage;
+      String errorMessage = Constants.apiErrorMessage;
       
       if (e.toString().contains('timeout')) {
         errorMessage = 'Request timeout. Vui lòng thử lại.';
       } else if (e.toString().contains('SocketException')) {
-        errorMessage = AppConstants.networkErrorMessage;
+        errorMessage = Constants.networkErrorMessage;
       }
       
       return ApiResponse.error(errorMessage);
@@ -176,7 +176,7 @@ class ApiService {
   Future<ApiResponse<List<Article>>> getArticlesByCategory({
     required String category,
     int page = 1,
-    int pageSize = AppConstants.pageSize,
+    int pageSize = Constants.pageSize,
   }) async {
     return getTopHeadlines(
       category: category,

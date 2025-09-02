@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:newtop/models/article.dart';
 import 'package:newtop/services/storage_service.dart';
 import 'package:newtop/themes/app_theme.dart';
+
 import 'package:newtop/widgets/article_card.dart';
 import 'package:newtop/widgets/loading_widget.dart';
 import 'package:newtop/widgets/error_widget.dart';
+import 'package:newtop/utils/snackbar_helper.dart';
 
 /// Screen that displays all bookmarked articles with management functionality.
 /// 
@@ -113,12 +115,7 @@ class _BookmarkedArticlesScreenState extends State<BookmarkedArticlesScreen> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    SnackBarHelper.show(context, message);
   }
 
 
